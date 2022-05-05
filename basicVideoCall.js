@@ -117,14 +117,21 @@ async function startBasicCall() {
       await rtc.client.leave();
     };
 
-    document.getElementById("muteUnmute").onclick = async function () {
+    document.getElementById("muteVideo").onclick = async function () {
       try {
-        // If there no mutex lock, procure a lock
         console.log("unmuting the track");
         await rtc.localVideoTrack?.setEnabled(false);
-        // Release the lock once done
       } catch (e) {
-        // If the function procures the mutex,
+        console.log("error while muting: ", e);
+      }
+    };
+
+    document.getElementById("unmuteVideo").onclick = async function () {
+      try {
+        console.log("unmuting the track");
+        await rtc.localVideoTrack?.setEnabled(true);
+      } catch (e) {
+        console.log("error while unmuting: ", e);
       }
     };
   };
