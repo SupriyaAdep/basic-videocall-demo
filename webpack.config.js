@@ -1,12 +1,18 @@
 const path = require("path");
 
 module.exports = {
-  entry: "./basicVideoCall.js",
-  output: {
-    filename: "bundle.js",
-    path: path.resolve(__dirname, "./dist"),
+  mode: "development",
+  entry: {
+    index: "./src/index.js",
   },
+  output: {
+    filename: "main.js",
+    path: path.resolve(__dirname, "dist"),
+    clean: true,
+  },
+  devtool: "inline-source-map",
   devServer: {
+    static: "./dist",
     compress: true,
     port: 9000,
   },
