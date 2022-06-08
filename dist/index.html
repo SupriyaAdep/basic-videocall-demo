@@ -73,11 +73,9 @@
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
-      <div class="container">
-        <!--
-    Input fields so the user can securely join a Video Call channel.
-  -->
-        <form id="join-form">
+      <div class="container-fluid">
+        <!--Input fields so the user can securely join a Video Call channel-->
+        <form id="join-form" class="bg-light p-3">
           <div class="row join-info-group">
             <div class="col-sm">
               <p class="join-info-text">APP ID</p>
@@ -89,7 +87,9 @@
               />
               <p class="tips">
                 You find your APP ID in the
-                <a href="https://console.agora.io/projects">Agora Console</a>
+                <a href="https://console.agora.io/projects" target="_blank"
+                  >Agora Console</a
+                >
               </p>
             </div>
             <div class="col-sm">
@@ -103,7 +103,9 @@
               <p class="tips">
                 You create a channel when you create a temporary token. You
                 guessed it, in
-                <a href="https://console.agora.io/projects">Agora Console</a>
+                <a href="https://console.agora.io/projects" target="_blank"
+                  >Agora Console</a
+                >
               </p>
             </div>
             <div class="col-sm">
@@ -118,66 +120,58 @@
             </div>
           </div>
 
-          <!--
-      Join or leave a Video Call channel.
-    -->
-
-          <div class="button-group">
-            <button id="join" type="submit" class="btn btn-primary btn-sm">
-              Join
-            </button>
-            <button
-              id="leave"
-              type="button"
-              class="btn btn-primary btn-sm"
-              disabled
-            >
-              Leave
-            </button>
-            <button
-              id="mute-audio"
-              type="button"
-              class="btn btn-primary btn-sm"
-            >
-              Mute Audio
-            </button>
-            <button
-              id="mute-video"
-              type="button"
-              class="btn btn-primary btn-sm"
-            >
-              Mute Video
-            </button>
-          </div>
-          <div class="row pt-2 pb-2"></div>
-          <div class="button-group">
-            <button
-              id="start-screenshare"
-              type="button"
-              class="btn btn-primary btn-sm"
-            >
-              Share screen
-            </button>
-            <button
-              id="stop-screenshare"
-              type="button"
-              class="btn btn-primary btn-sm"
-              disabled
-            >
-              Stop screen
-            </button>
+          <!-- Join or leave a Video Call channel -->
+          <div class="row py-3">
+            <div class="button-group">
+              <button id="join" type="submit" class="btn btn-primary btn-sm">
+                Join
+              </button>
+              <button
+                id="leave"
+                type="button"
+                class="btn btn-primary btn-sm"
+                disabled
+              >
+                Leave
+              </button>
+              <button
+                id="mute-audio"
+                type="button"
+                class="btn btn-primary btn-sm"
+              >
+                Mute Audio
+              </button>
+              <button
+                id="mute-video"
+                type="button"
+                class="btn btn-primary btn-sm"
+              >
+                Mute Video
+              </button>
+              <button
+                id="start-screenshare"
+                type="button"
+                class="btn btn-primary btn-sm"
+              >
+                Share screen
+              </button>
+            </div>
           </div>
         </form>
-        <!--
-    This local media splayer is enabled when the user has successfully joined a Video Call channel.
-  -->
+      </div>
+      <div class="container-fluid p-5">
+        <div class="row pt-2 pb-2"></div>
+        <!-- This local media splayer is enabled when the user has successfully joined a Video Call channel. -->
         <div class="row video-group">
-          <div class="col">
-            <p id="local-player-name" class="player-name"></p>
-            <div id="local-player" class="player"></div>
+          <h5 class="text-primary">Local users</h5>
+          <div class="col rounded border-primary border border-5 p-3">
+            <div id="local-playerlist"></div>
           </div>
-          <div class="w-100"></div>
-          <div class="col">
+
+          <div class="w-100 py-3"></div>
+
+          <h5 class="text-success">Remote users</h5>
+          <div class="col rounded border-success border border-5 p-3">
             <div id="remote-playerlist"></div>
           </div>
         </div>
