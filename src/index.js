@@ -4,6 +4,7 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import "./style.css";
 
 var client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
+var screenClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
 /*
  * Clear the video and audio tracks used by `client` on initiation.
@@ -14,8 +15,8 @@ let screenTracks = {
 };
 
 let screenTrackState = {
-  screenVideoTrackMuted: false,
-  screenAudioTrackMuted: false,
+  screenVideoTrackMuted: true,
+  screenAudioTrackMuted: true,
 };
 
 let localTracks = {
@@ -135,6 +136,7 @@ $("#join-form").submit(async function (e) {
 
 $("#leave").on("click", function (e) {
   leave();
+  window.location.reload();
 });
 
 /*
@@ -163,10 +165,8 @@ $("#mute-video").on("click", function (e) {
  */
 
 $("#start-screenshare").on("click", function (e) {
-  if (!screenTrackState.screenVideoTrackMuted) {
+  if (screenTrackState.screenVideoTrackMuted) {
     startScreenshare();
-  } else {
-    stopScreenshare();
   }
 });
 
@@ -200,9 +200,14 @@ async function join() {
   showMuteButton();
   showScreenshareControls();
   // Play the local video track to the local browser and update the UI with the user ID.
-  localTracks.videoTrack.play("local-player");
-  $("#local-player-name").text(`localVideo(${options.uid})`);
-
+  const player = $(`
+        <div id="local-player-wrapper-${options.uid}">
+          <p id="local-player-name-${options.uid}" class="player-name">localUser(${options.uid})</p>
+          <div id="local-player-${options.uid}" class="player"></div>
+        </div>
+      `);
+  $("#local-playerlist").append(player);
+  localTracks.videoTrack.play(`local-player-${options.uid}`);
   // Publish the local video and audio tracks to the channel.
   await client.publish(Object.values(localTracks));
   console.log("publish success");
@@ -213,25 +218,33 @@ async function join() {
  */
 async function leave() {
   for (let trackName in localTracks) {
-    var track = localTracks[trackName];
+    let track = localTracks[trackName];
     if (track) {
       track.stop();
       track.close();
       localTracks[trackName] = undefined;
     }
   }
+  for (let trackName in screenTracks) {
+    let track = screenTracks[trackName];
+    if (track) {
+      track.stop();
+      track.close();
+      screenTracks[trackName] = undefined;
+    }
+  }
 
   // Remove remote users and player views.
   remoteUsers = {};
+  $("#local-playerlist").html("");
   $("#remote-playerlist").html("");
 
   // leave the channel
   await client.leave();
+  await screenClient.leave();
 
-  $("#local-player-name").text("");
   $("#join").attr("disabled", false);
   $("#leave").attr("disabled", true);
-  hideMuteButton();
   console.log("client leaves channel success");
 }
 
@@ -266,20 +279,22 @@ async function subscribe(user, mediaType) {
 
 /*
  * Add a user who has subscribed to the live channel to the local interface.
- *
- * @param  {IAgoraRTCRemoteUser} user - The {@link  https://docs.agora.io/en/Voice/API%20Reference/web_ng/interfaces/iagorartcremoteuser.html| remote user} to add.
- * @param {trackMediaType - The {@link https://docs.agora.io/en/Voice/API%20Reference/web_ng/interfaces/itrack.html#trackmediatype | media type} to add.
  */
 function handleUserPublished(user, mediaType) {
-  // const id = user.uid;
-  // remoteUsers[id] = user;
-  subscribe(user, mediaType);
+  const id = user.uid;
+  if (
+    !screenTrackState.screenVideoTrackMuted &&
+    id === screenshareoptions.uid
+  ) {
+    // do nothing
+  } else {
+    remoteUsers[id] = user;
+    subscribe(user, mediaType);
+  }
 }
 
 /*
  * Remove the user specified from the channel in the local interface.
- *
- * @param  {string} user - The {@link  https://docs.agora.io/en/Voice/API%20Reference/web_ng/interfaces/iagorartcremoteuser.html| remote user} to remove.
  */
 function handleUserUnpublished(user, mediaType) {
   if (mediaType === "video") {
@@ -298,11 +313,6 @@ function handleUserLeft(user) {
   const id = user.uid;
   delete remoteUsers[id];
   $(`#player-wrapper-${id}`).remove();
-}
-
-function hideMuteButton() {
-  $("#mute-video").css("display", "none");
-  $("#mute-audio").css("display", "none");
 }
 
 function showMuteButton() {
@@ -344,91 +354,79 @@ async function unmuteVideo() {
 
 // Screenshare code begins
 
-function hideScreenshareControls() {
-  $("#start-screenshare").css("display", "none");
-  $("#stop-screenshare").css("display", "none");
-}
-
 function showScreenshareControls() {
   $("#start-screenshare").css("display", "inline-block");
-  $("#stop-screenshare").css("display", "inline-block");
 }
 
 async function startScreenshare() {
+  let screenStream;
   try {
-    let screenStream;
-    screenStream = AgoraRTC.createScreenVideoTrack({}, "auto");
-
-    if (screenStream instanceof Array) {
-      screenTracks.screenVideoTrack = screenStream[0];
-      screenTracks.screenAudioTrack = screenStream[1];
-    } else {
-      screenTracks.screenVideoTrack = screenStream;
-    }
-  } catch (e) {
-    console.log("[screenshare]: Error during intialization");
-    throw e;
+    [screenshareoptions.uid, screenStream] = await Promise.all([
+      // Join the channel.
+      screenClient.join(options.appid, options.channel, null, null),
+      AgoraRTC.createScreenVideoTrack(
+        {
+          encoderConfig: {
+            framerate: 15,
+            height: 720,
+            width: 1280,
+          },
+        },
+        "auto"
+      ),
+    ]);
+    $("#start-screenshare").attr("disabled", true);
+  } catch (error) {
+    console.error("Error: cannot screenshare check permissions");
   }
-  // [screenshareoptions.uid, screenStream] = await Promise.all([
-  //   // Join the channel.
-  //   client.join(
-  //     options.appid,
-  //     options.channel,
-  //     options.token || null,
-  //     options.uid || null
-  //   ),
-  //   AgoraRTC.createScreenVideoTrack(
-  //     {
-  //       encoderConfig: {
-  //         framerate: 15,
-  //         height: 720,
-  //         width: 1280,
-  //       },
-  //     },
-  //     "auto"
-  //   ),
-  // ]);
-  // $("#start-screenshare").attr("disabled", true);
-  // console.log("supriya screenStream", screenStream);
-  // if (screenStream instanceof Array) {
-  //   screenTracks.screenVideoTrack = screenStream[0];
-  //   screenTracks.screenAudioTrack = screenStream[1];
-  // } else {
-  //   screenTracks.screenVideoTrack = screenStream;
-  // }
+
+  if (screenStream instanceof Array) {
+    screenTracks.screenVideoTrack = screenStream[0];
+    screenTracks.screenAudioTrack = screenStream[1];
+  } else {
+    screenTracks.screenVideoTrack = screenStream;
+  }
+
+  // const player = $(`
+  //       <div id="local-player-wrapper-${screenshareoptions.uid}">
+  //         <p id="local-player-name-${screenshareoptions.uid}" class="player-name">localUser(${screenshareoptions.uid})</p>
+  //         <div id="local-player-${screenshareoptions.uid}" class="player"></div>
+  //       </div>
+  //     `);
+
+  // $("#local-playerlist").append(player);
+
   // // play local video track
-  // screenTracks.screenVideoTrack.play("local-player");
-  // $("#local-player-name").text(`localVideo(${options.uid})`);
+  // screenTracks.screenVideoTrack.play(`local-player-${screenshareoptions.uid}`);
 
-  // //bind "track-ended" event, and when screensharing is stopped, there is an alert to notify the end user.
-  // screenTracks.screenVideoTrack.on("track-ended", () => {
-  //   alert(
-  //     `Screen-share track ended, stop sharing screen ` +
-  //       screenTracks.screenVideoTrack.getTrackId()
-  //   );
-  //   screenTracks.screenVideoTrack && screenTracks.screenVideoTrack.close();
-  //   screenTracks.screenAudioTrack && screenTracks.screenAudioTrack.close();
-  //   screenTracks.audioTrack && screenTracks.audioTrack.close();
-  //   screenTrackState.videoTrackMuted = true;
-  //   screenTrackState.audioTrackMuted = true;
-  // });
+  //bind "track-ended" event, and when screensharing is stopped, there is an alert to notify the end user.
+  screenTracks.screenVideoTrack.on("track-ended", () => {
+    alert(
+      `Screen-share track ended, stop sharing screen ` +
+        screenTracks.screenVideoTrack.getTrackId()
+    );
+    screenClient.leave();
+    screenTracks.screenVideoTrack && screenTracks.screenVideoTrack.close();
+    screenTracks.screenAudioTrack && screenTracks.screenAudioTrack.close();
+    screenStream = {};
+    // screenTracks.audioTrack && screenTracks.audioTrack.close();
+    screenTrackState.screenVideoTrackMuted = true;
+    screenTrackState.screenAudioTrackMuted = true;
+    $("#start-screenshare").attr("disabled", false);
+    // $(`#local-player-wrapper-${screenshareoptions.uid}`).remove();
+  });
 
-  // // publish local tracks to channel
-  // if (screenTracks.screenAudioTrack == null) {
-  //   await client.publish([
-  //     screenTracks.screenVideoTrack,
-  //     screenTracks.audioTrack,
-  //   ]);
-  // } else {
-  //   await client.publish([
-  //     screenTracks.screenVideoTrack,
-  //     screenTracks.audioTrack,
-  //     screenTracks.screenAudioTrack,
-  //   ]);
-  // }
-  // console.log("screenshare publish success");
-}
-
-function stopScreenshare() {
-  console.log("stop screenshare");
+  // publish local tracks to channel
+  if (screenTracks.screenAudioTrack == null) {
+    screenTrackState.screenVideoTrackMuted = false;
+    await screenClient.publish([screenTracks.screenVideoTrack]);
+  } else {
+    screenTrackState.screenVideoTrackMuted = false;
+    screenTrackState.screenAudioTrackMuted = false;
+    await screenClient.publish([
+      screenTracks.screenVideoTrack,
+      screenTracks.screenAudioTrack,
+    ]);
+  }
+  console.log("screenshare publish success");
 }
