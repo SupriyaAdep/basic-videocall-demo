@@ -76,23 +76,23 @@
       <div class="container-fluid">
         <!--Input fields so the user can securely join a Video Call channel-->
         <form id="join-form" class="bg-light p-3">
-          <div class="row join-info-group">
-            <div class="col-sm">
-              <p class="join-info-text">APP ID</p>
+          <div class="row gx-5 gy-3 join-info-group">
+            <div class="col-md-4">
+              <p class="join-info-text">App ID</p>
               <input
                 id="appid"
                 type="text"
                 placeholder="Enter the appid"
                 required
               />
-              <p class="tips">
+              <p class="form-text">
                 You find your APP ID in the
                 <a href="https://console.agora.io/projects" target="_blank"
                   >Agora Console</a
                 >
               </p>
             </div>
-            <div class="col-sm">
+            <div class="col-md-4">
               <p class="join-info-text">Channel Name</p>
               <input
                 id="channel"
@@ -100,15 +100,8 @@
                 placeholder="Enter the channel name"
                 required
               />
-              <p class="tips">
-                You create a channel when you create a temporary token. You
-                guessed it, in
-                <a href="https://console.agora.io/projects" target="_blank"
-                  >Agora Console</a
-                >
-              </p>
             </div>
-            <div class="col-sm">
+            <div class="col-md-4">
               <p class="join-info-text">User ID(optional)</p>
               <input
                 id="uid"
@@ -117,6 +110,19 @@
                 onafterpaste="this.value=this.value.replace(/[^0-9]/g,'')"
                 placeholder="Enter the user ID"
               />
+            </div>
+            <div class="col-md-12">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  type="checkbox"
+                  value=""
+                  id="dualstream"
+                />
+                <label class="form-check-label" for="dualstream">
+                  Enable DualStream ?
+                </label>
+              </div>
             </div>
           </div>
 

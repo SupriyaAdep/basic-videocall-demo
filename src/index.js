@@ -28,6 +28,13 @@ let localTrackState = {
   videoTrackMuted: false,
   audioTrackMuted: false,
 };
+
+/**
+ * State to store other features
+ */
+let features = {
+  dualstream: false,
+};
 /*
  * On initiation no users are connected.
  */
@@ -96,7 +103,7 @@ $(() => {
     $("#appid").val(options.appid);
     $("#token").val(options.token);
     $("#channel").val(options.channel);
-    $("#join-form").submit();
+    $("#join-form").trigger("submit");
   }
 });
 
@@ -105,7 +112,7 @@ $(() => {
  * entered in the form and calls join asynchronously. The UI is updated to match the options entered
  * by the user.
  */
-$("#join-form").submit(async function (e) {
+$("#join-form").on("submit", async function (e) {
   e.preventDefault();
   $("#join").attr("disabled", true);
   try {
@@ -113,6 +120,7 @@ $("#join-form").submit(async function (e) {
     options.token = $("#token").val();
     options.channel = $("#channel").val();
     options.uid = Number($("#uid").val());
+    features.dualstream = $("#dualstream").is(":checked");
     await join();
     if (options.token) {
       $("#success-alert-with-token").css("display", "block");
@@ -195,7 +203,9 @@ async function join() {
       AgoraRTC.createMicrophoneAudioTrack(),
       AgoraRTC.createCameraVideoTrack(),
     ]);
-
+  if (features.dualstream) {
+    await client.enableDualStream(true);
+  }
   // Show the buttons
   showMuteButton();
   showScreenshareControls();
@@ -270,9 +280,11 @@ async function subscribe(user, mediaType) {
       $("#remote-playerlist").append(player);
     }
     // Play the remote video.
+    console.log("published video success", user.videoTrack);
     user.videoTrack.play(`player-${uid}`);
   }
   if (mediaType === "audio") {
+    console.log("published audio success", user.audioTrack);
     user.audioTrack.play();
   }
 }
@@ -298,6 +310,7 @@ function handleUserPublished(user, mediaType) {
  */
 function handleUserUnpublished(user, mediaType) {
   if (mediaType === "video") {
+    console.log("unpublishing video", user);
     const id = user.uid;
     delete remoteUsers[id];
     $(`#player-wrapper-${id}`).remove();
@@ -419,6 +432,7 @@ async function startScreenshare() {
   // publish local tracks to channel
   if (screenTracks.screenAudioTrack == null) {
     screenTrackState.screenVideoTrackMuted = false;
+    console.log("publishing screenshare", screenTracks.screenVideoTrack);
     await screenClient.publish([screenTracks.screenVideoTrack]);
   } else {
     screenTrackState.screenVideoTrackMuted = false;
