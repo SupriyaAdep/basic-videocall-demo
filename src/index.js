@@ -1,7 +1,10 @@
 import AgoraRTC from "agora-rtc-sdk-ng";
+
 import "bootstrap";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "./style.css";
+
+console.log("AgoraRTC version: ", AgoraRTC.VERSION);
 
 var client = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 var screenClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
