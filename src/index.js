@@ -203,7 +203,16 @@ async function join() {
         options.uid || null
       ),
       // Create tracks to the local microphone and camera.
-      AgoraRTC.createMicrophoneAudioTrack(),
+      /**
+       * Issue: Backgrounding the browser or app causes the audio streaming to be cut off.
+       * Solution:
+       *    Upgrade to the Web SDK v4.7.3 or later versions.
+       *    When calling createMicrophoneAudioTrack, set bypassWebAudio as true.
+       *    The Web SDK directly publishes the local audio stream without processing it through WebAudio.
+       */
+      AgoraRTC.createMicrophoneAudioTrack({
+        bypassWebAudio: true,
+      }),
       AgoraRTC.createCameraVideoTrack(),
     ]);
   if (features.dualstream) {
