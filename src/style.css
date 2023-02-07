@@ -45,7 +45,8 @@ input {
 #start-screenshare,
 #stop-screenshare,
 #mute-audio,
-#mute-video {
+#mute-video,
+#publish-video-again {
   display: none;
 }
 

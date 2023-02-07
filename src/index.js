@@ -170,6 +170,10 @@ $("#mute-video").on("click", function (e) {
     unmuteVideo();
   }
 });
+$("#publish-video-again").on("click", async function (e) {
+  localTracks.videoTrack = await AgoraRTC.createCameraVideoTrack();
+  await client.publish(Object.values(localTracks));
+});
 
 /**
  * Called when a user starts screenshare
@@ -221,6 +225,7 @@ async function join() {
   // Show the buttons
   showMuteButton();
   showScreenshareControls();
+  showPublishAgainControls();
   // Play the local video track to the local browser and update the UI with the user ID.
   const player = $(`
         <div id="local-player-wrapper-${options.uid}">
@@ -343,6 +348,9 @@ function handleUserLeft(user) {
 function showMuteButton() {
   $("#mute-video").css("display", "inline-block");
   $("#mute-audio").css("display", "inline-block");
+}
+function showPublishAgainControls() {
+  $("#publish-video-again").css("display", "inline-block");
 }
 
 async function muteAudio() {
